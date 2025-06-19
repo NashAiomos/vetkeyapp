@@ -1,3 +1,4 @@
+mod declarations;
 mod transfer;
 mod user;
 mod utils;
@@ -7,7 +8,7 @@ use ic_stable_structures::memory_manager::{MemoryId, MemoryManager, VirtualMemor
 use ic_stable_structures::storable::Blob;
 use ic_stable_structures::{Cell, DefaultMemoryImpl, StableBTreeMap};
 use std::cell::RefCell;
-use transfer::transfer_types::{Transfer, TransferId};
+use transfer::transfer_types::{Transfer, TransferId, TransferIndexKey};
 
 type Memory = VirtualMemory<DefaultMemoryImpl>;
 
@@ -35,10 +36,23 @@ thread_local! {
             )
         );
 
-    static TO_TRANSFERS_INDEX: RefCell<StableBTreeMap<(String, TransferId), TransferId, Memory>> =
+    static TO_TRANSFERS_INDEX: RefCell<StableBTreeMap<TransferIndexKey, TransferId, Memory>> =
         RefCell::new(
             StableBTreeMap::init(
                 MEMORY_MANAGER.with(|m| m.borrow().get(TO_TRANSFERS_INDEX_MEMORY_ID)),
             )
         );
 }
+
+// 导出用户控制器函数
+pub use user::controller::user_get::user_get;
+pub use user::controller::user_register::user_register;
+
+// 导出传输控制器函数
+pub use transfer::controller::transfer_create::transfer_create;
+pub use transfer::controller::transfer_get::transfer_get;
+pub use transfer::controller::transfer_list::transfer_list;
+
+// 导出 vetkd 控制器函数
+pub use vetkd::controller::vetkd_encrypted_key::vetkd_encrypted_key;
+pub use vetkd::controller::vetkd_public_key::vetkd_public_key;

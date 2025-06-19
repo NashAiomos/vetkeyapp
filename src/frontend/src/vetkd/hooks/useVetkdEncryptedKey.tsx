@@ -7,20 +7,30 @@ export default function useVetkdEncryptedKey() {
   return useQuery({
     queryKey: ["encrypted_key_get"],
     queryFn: async () => {
+      console.log("🔐 [VETKD] 开始生成传输密钥...");
+      
       const seed = window.crypto.getRandomValues(new Uint8Array(32));
+      console.log("🎲 [VETKD] 生成随机种子，长度:", seed.length, "字节");
+      
       const transportSecretKey = new vetkd.TransportSecretKey(seed);
-      const response = await backend?.vetkd_encrypted_key(
-        transportSecretKey.public_key(),
-      );
+      const publicKeyBytes = transportSecretKey.public_key();
+      console.log("🔑 [VETKD] 传输密钥生成完成，公钥长度:", publicKeyBytes.length, "字节");
+      
+      console.log("[VETKD] 请求后端生成加密密钥...");
+      const response = await backend?.vetkd_encrypted_key(publicKeyBytes);
+      
       if (!response) {
-        console.error("Error getting encrypted key, empty response");
+        console.error("❌ [VETKD] 错误获取加密密钥，空响应");
         return;
       }
       if ("Err" in response) {
-        console.error("Error getting encrypted key", response.Err);
+        console.error("❌ [VETKD] 错误获取加密密钥:", response.Err);
         return;
       }
+      
       const encryptedKey = response.Ok as Uint8Array;
+      console.log("✅ [VETKD] 成功获取加密密钥，长度:", encryptedKey.length, "字节");
+      
       return { transportSecretKey, encryptedKey };
     },
     enabled: !!backend,

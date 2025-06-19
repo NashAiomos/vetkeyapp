@@ -4,6 +4,7 @@ import { formatDistanceToNow } from "date-fns";
 import { File } from "lucide-react";
 import { formatSize } from "@/lib/formatSize";
 import useTransferList from "@/transfer/hooks/useTransferList";
+import { Transfer } from "../../../backend/declarations/backend.did";
 
 function ReceivedFilesInner() {
   const [isOpen, setIsOpen] = useState(false);
@@ -21,11 +22,11 @@ function ReceivedFilesInner() {
   };
 
   if (isPending) {
-    return <p className="text-gray-400">加载中...</p>;
+    return <p className="text-gray-400">Loading...</p>;
   }
 
   if (!transfers || transfers.length === 0) {
-    return <p className="text-gray-400">还没有收到任何文件。</p>;
+    return <p className="text-gray-400">No documents have been received yet.</p>;
   }
 
   return (
@@ -33,17 +34,17 @@ function ReceivedFilesInner() {
       <table className="w-full text-sm">
         <thead>
           <tr>
-            <th className="text-left p-4">文件名</th>
-            <th className="text-left p-4">发送者</th>
-            <th className="text-left p-4">大小</th>
-            <th className="text-left p-4">创建时间</th>
+            <th className="text-left p-4">Name</th>
+            <th className="text-left p-4">Sender</th>
+            <th className="text-left p-4">Size</th>
+            <th className="text-left p-4">Create Time</th>
           </tr>
         </thead>
         <tbody>
           {transfers
             .slice()
             .reverse()
-            .map((transfer) => {
+            .map((transfer: Transfer) => {
               const createdAt = new Date(Number(transfer.created) / 1_000_000);
               const formattedDate = formatDistanceToNow(createdAt, {
                 addSuffix: true,
@@ -95,7 +96,7 @@ function ReceivedFilesInner() {
 export default function ReceivedFiles() {
   return (
     <div className="p-6 rounded-lg border w-full max-w-2xl">
-      <h2 className="text-2xl font-bold text-white mb-6">接收的文件</h2>
+      <h2 className="text-2xl font-bold text-white mb-6">Received files</h2>
       <ReceivedFilesInner />
     </div>
   );

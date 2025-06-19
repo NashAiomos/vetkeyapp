@@ -4,15 +4,29 @@ use crate::{
         VetkdDeriveEncryptedKeyArgsKeyId,
     },
 };
+use candid::{CandidType, Principal};
 use ic_cdk::update;
+use serde::Deserialize;
 use serde_bytes::ByteBuf;
 
+#[derive(CandidType, Deserialize, Debug)]
+pub enum VetkdEncryptedKeyResponse {
+    Ok(Vec<u8>),
+    Err(String),
+}
+
 #[update]
-async fn vetkd_encrypted_key(encryption_public_key: Vec<u8>) -> Result<Vec<u8>, String> {
+pub async fn vetkd_encrypted_key(encryption_public_key: Vec<u8>) -> VetkdEncryptedKeyResponse {
     let caller = ic_cdk::caller();
-    if caller == candid::Principal::anonymous() {
-        return Err("anonymous caller not allowed".to_string());
+    ic_cdk::println!("[VETKD] 开始生成加密密钥 - 调用者: {}", caller);
+    
+    if caller == Principal::anonymous() {
+        ic_cdk::println!("❌ [VETKD] 拒绝匿名调用者");
+        return VetkdEncryptedKeyResponse::Err("anonymous caller not allowed".to_string());
     }
+
+    ic_cdk::println!("[VETKD] 接收到的加密公钥长度: {} 字节", encryption_public_key.len());
+    ic_cdk::println!("[VETKD] 使用推导ID: {:?}", caller.as_slice());
 
     let args = VetkdDeriveEncryptedKeyArgs {
         key_id: VetkdDeriveEncryptedKeyArgsKeyId {
@@ -24,10 +38,19 @@ async fn vetkd_encrypted_key(encryption_public_key: Vec<u8>) -> Result<Vec<u8>, 
         encryption_public_key: ByteBuf::from(encryption_public_key),
     };
 
-    let (result,) = chainkey_testing_canister
+    ic_cdk::println!("[VETKD] 调用chainkey_testing_canister.vetkd_derive_encrypted_key...");
+
+    match chainkey_testing_canister
         .vetkd_derive_encrypted_key(args)
         .await
-        .unwrap();
-
-    Ok(result.encrypted_key.to_vec())
+    {
+        Ok((result,)) => {
+            ic_cdk::println!("✅ [VETKD] 成功生成加密密钥，长度: {} 字节", result.encrypted_key.len());
+            VetkdEncryptedKeyResponse::Ok(result.encrypted_key.to_vec())
+        },
+        Err(e) => {
+            ic_cdk::println!("❌ [VETKD] 生成加密密钥失败: {:?}", e);
+            VetkdEncryptedKeyResponse::Err(format!("Failed to derive encrypted key: {:?}", e))
+        }
+    }
 }

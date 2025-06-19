@@ -45,3 +45,22 @@ impl Storable for Transfer {
 
     const BOUND: Bound = Bound::Unbounded;
 }
+
+// 为索引创建的复合键类型
+#[derive(CandidType, Deserialize, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub struct TransferIndexKey {
+    pub to: String,
+    pub transfer_id: TransferId,
+}
+
+impl Storable for TransferIndexKey {
+    fn to_bytes(&self) -> std::borrow::Cow<[u8]> {
+        Cow::Owned(Encode!(self).unwrap())
+    }
+
+    fn from_bytes(bytes: std::borrow::Cow<[u8]>) -> Self {
+        Decode!(bytes.as_ref(), Self).unwrap()
+    }
+
+    const BOUND: Bound = Bound::Unbounded;
+}

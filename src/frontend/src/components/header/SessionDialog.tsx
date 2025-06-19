@@ -23,7 +23,7 @@ export default function SessionDialog({
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogContent className="w-96">
-        <DialogHeader>会话信息</DialogHeader>
+        <DialogHeader>User</DialogHeader>
         <div className="px-4 py-2 text-xs rounded-lg bg-muted">
           <pre>
             <div>
@@ -42,10 +42,10 @@ export default function SessionDialog({
             variant="outline"
             className="w-full"
           >
-            关闭
+            Back
           </Button>
           <Button onClick={handleLogout} className="w-full">
-            退出登录
+            Log Out
           </Button>
         </div>
       </DialogContent>

@@ -12,23 +12,49 @@ export default function useRegisterUser() {
   return useQuery({
     queryKey: ["user_register", principal],
     queryFn: async () => {
-      const getResponse = await backend!.user_get();
-      if ("Err" in getResponse) {
-        console.error("Error fetching user", getResponse.Err);
-        return;
-      }
-      const registeredPrincipal = getResponse.Ok;
-      if (registeredPrincipal.length > 0) {
-        return registeredPrincipal[0];
+      console.log("开始用户注册流程，Principal:", principal);
+      
+      if (!backend) {
+        console.error("Backend actor 未初始化");
+        throw new Error("Backend actor not initialized");
       }
 
-      const registerResponse = await backend!.user_register();
-      if ("Err" in registerResponse) {
-        console.error("Error registering user", registerResponse.Err);
-        return;
+      try {
+        // 首先尝试获取用户
+        console.log("尝试获取现有用户...");
+        const getResponse = await backend.user_get();
+        console.log("user_get 响应:", getResponse);
+        
+        if ("Err" in getResponse) {
+          console.error("获取用户时出错:", getResponse.Err);
+          throw new Error(`获取用户失败: ${JSON.stringify(getResponse.Err)}`);
+        }
+        
+        const registeredPrincipal = getResponse.Ok;
+        if (registeredPrincipal && registeredPrincipal.length > 0) {
+          console.log("用户已存在:", registeredPrincipal[0]);
+          return registeredPrincipal[0];
+        }
+
+        // 如果用户不存在，则注册新用户
+        console.log("用户不存在，开始注册...");
+        const registerResponse = await backend.user_register();
+        console.log("user_register 响应:", registerResponse);
+        
+        if ("Err" in registerResponse) {
+          console.error("注册用户时出错:", registerResponse.Err);
+          throw new Error(`注册用户失败: ${JSON.stringify(registerResponse.Err)}`);
+        }
+        
+        console.log("用户注册成功:", registerResponse.Ok);
+        return registerResponse.Ok;
+      } catch (error) {
+        console.error("用户注册流程出错:", error);
+        throw error;
       }
-      return registerResponse.Ok;
     },
     enabled: !!principal && !!backend,
+    retry: 3,
+    retryDelay: 1000,
   });
 }

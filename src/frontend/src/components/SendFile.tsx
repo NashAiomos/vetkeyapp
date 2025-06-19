@@ -8,7 +8,7 @@ import { queryClient } from "@/main";
 
 export default function SendFile() {
   const { actor } = useActor();
-  const { mutateAsync: createTransfer } = useTransferCreate();
+  const { mutateAsync } = useTransferCreate();
   const { toast } = useToast();
 
   // Local state
@@ -20,20 +20,30 @@ export default function SendFile() {
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!actor || !file) return;
+    if (!actor || !file || !recipientPrincipal) return;
+
+    console.log("🚀 [发送文件] 开始发送文件流程");
+    console.log("📁 [发送文件] 文件信息:", {
+      name: file.name,
+      size: file.size,
+      type: file.type,
+      lastModified: file.lastModified
+    });
+    console.log("👤 [发送文件] 接收者Principal:", recipientPrincipal);
 
     setSaving(true);
     try {
-      await createTransfer({ recipientPrincipal, file });
-      toast({ description: "文件发送成功！" });
+      await mutateAsync({ recipientPrincipal, file });
+      console.log("✅ [发送文件] 文件发送成功");
+      toast({ description: "File sent successfully!" });
       void queryClient.invalidateQueries({ queryKey: ["transfer_list"] });
       setFile(null); // Reset file after successful transfer
       setRecipientPrincipal(""); // Reset recipient
     } catch (error) {
-      console.error(error);
+      console.error("❌ [发送文件] 文件发送失败:", error);
       toast({
         variant: "destructive",
-        description: "发送文件失败，请重试。",
+        description: "File sending failed, please try again",
       });
     } finally {
       setSaving(false);
@@ -58,7 +68,7 @@ export default function SendFile() {
     if (droppedFiles.length > 1) {
       toast({
         variant: "destructive",
-        description: "一次只能上传一个文件。",
+        description: "Only one file can be sent at a time",
       });
       return;
     }
@@ -67,10 +77,11 @@ export default function SendFile() {
     if (droppedFile.size > 1024 * 1024) {
       toast({
         variant: "destructive",
-        description: "文件大小超过1MB的最大限制。",
+        description: "File size cannot exceed 1MB",
       });
       return;
     }
+    console.log("📁 [发送文件] 通过拖拽选择文件:", droppedFile.name);
     setFile(droppedFile);
   }
 
@@ -79,7 +90,7 @@ export default function SendFile() {
     if (selectedFiles && selectedFiles.length > 1) {
       toast({
         variant: "destructive",
-        description: "一次只能上传一个文件。",
+        description: "Only one file can be uploaded at a time",
       });
       return;
     }
@@ -89,10 +100,11 @@ export default function SendFile() {
       if (selectedFile.size > 1024 * 1024) {
         toast({
           variant: "destructive",
-          description: "文件大小超过1MB的最大限制。",
+          description: "File size cannot exceed 1MB",
         });
         return;
       }
+      console.log("📁 [发送文件] 通过选择器选择文件:", selectedFile.name);
       setFile(selectedFile);
     }
   }
@@ -100,12 +112,12 @@ export default function SendFile() {
   const submitIcon = saving ? (
     <LoaderCircle className="animate-spin" />
   ) : undefined;
-  const submitText = saving ? "发送中..." : "发送文件";
+  const submitText = saving ? "Sending..." : "Send File";
   const submitDisabled = saving || !recipientPrincipal || !file;
 
   return (
     <div className="p-6 border rounded-lg w-full max-w-2xl">
-      <h2 className="text-2xl font-bold mb-6">发送文件</h2>
+      <h2 className="text-2xl font-bold mb-6">Send File</h2>
       <form
         className="space-y-6"
         onSubmit={(event) => {
@@ -114,7 +126,7 @@ export default function SendFile() {
       >
         <div>
           <label className="block text-sm font-medium mb-2">
-            接收者 Principal ID
+            Recipient Principal ID
           </label>
           <input
             className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
@@ -137,7 +149,7 @@ export default function SendFile() {
           {file ? (
             <p className="text-primary/50">{file.name}</p>
           ) : (
-            <p className="text-primary/50">拖拽文件到这里</p>
+            <p className="text-primary/50">Drag file here</p>
           )}
           <input
             type="file"
@@ -152,7 +164,7 @@ export default function SendFile() {
             className="mt-4"
             onClick={() => fileInputRef.current?.click()}
           >
-            选择文件
+            Select File
           </Button>
         </div>
         <Button className="w-full" disabled={submitDisabled} type="submit">

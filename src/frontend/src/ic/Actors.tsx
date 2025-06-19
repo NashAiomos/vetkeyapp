@@ -40,11 +40,10 @@ export default function Actors({ children }: { children: ReactNode }) {
     ) {
       toast({
         variant: "destructive",
-        description: "身份验证无效，请重新登录。",
+        description: "The authentication is invalid, please log in again.",
       });
       setTimeout(() => {
         logout(); // 退出登录
-        window.location.reload(); // 重新加载页面
       }, 1000);
       return;
     }

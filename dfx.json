@@ -1,5 +1,16 @@
 {
   "canisters": {
+    "internet_identity": {
+      "type": "custom",
+      "candid": "src/internet_identity/internet_identity.did",
+      "wasm": "src/internet_identity/internet_identity_dev.wasm.gz",
+      "remote": {
+        "id": {
+          "ic": "rdmx6-jaaaa-aaaaa-aaadq-cai"
+        }
+      },
+      "frontend": {}
+    },
     "chainkey_testing_canister": {
       "candid": "src/chainkey_testing_canister/chainkey_testing_canister.did",
       "declarations": {
@@ -17,6 +28,7 @@
       "type": "rust"
     },
     "frontend": {
+      "dependencies": ["backend"],
       "build": ["pnpm run build"],
       "declarations": {
         "output": "src/frontend/declarations"
